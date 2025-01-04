@@ -21,11 +21,18 @@ class GitChecker:
 		downloadPath = os.path.join(DIR,'..','..','data','repos',self.osInfo.name,packageInfo.name)
 		repoLink=self.osInfo.gitLink+packageInfo.name+'.git'
 		log.info("git link is "+repoLink)
+		print(repoLink)
 		if os.path.exists(downloadPath):
-			self.repo = git.Repo(downloadPath)
-			self.repo.remotes.origin.pull()
-			#check if git repo have to update
-			#disable only for debug
+			try:
+				self.repo = git.Repo(downloadPath)
+				self.repo.remotes.origin.pull()
+				#check if git repo have to update
+				#disable only for debug
+			except Exception as e:
+				log.warning("previous local git repo may broken")
+				shutil.rmtree(downloadPath)
+				os.makedirs(downloadPath)
+				self.repo = git.Repo.clone_from(repoLink,to_path=downloadPath)
 		else:
 			if not os.path.exists(downloadPath):
 				os.makedirs(downloadPath)
@@ -257,7 +264,7 @@ class GitChecker:
 			return specResult
 		if srcResult!=specResult:
 			log.warning("src and spec matched different commit,srcResult="+str(srcResult)+" specResult="+str(specResult))
-			raise Exception("src and spec matched different commit,srcResult="+str(srcResult)+" specResult="+str(specResult))
+			#raise Exception("src and spec matched different commit,srcResult="+str(srcResult)+" specResult="+str(specResult))
 		return srcResult
 	def checkSpecFile(self,commitId,cveChecker):
 		commit=self.repo.commit(commitId)
